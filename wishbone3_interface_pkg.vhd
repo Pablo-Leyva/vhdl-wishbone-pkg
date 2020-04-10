@@ -14,7 +14,7 @@ package wishbone3_interface_pkg is
     );
 
     type wishbone3_m2s_t is record
-        addr : std_ulogic;
+        addr : std_ulogic_vector;
         data : std_ulogic_vector;
         sel  : std_ulogic_vector;
         we   : std_ulogic;
@@ -32,7 +32,7 @@ package wishbone3_interface_pkg is
     type wishbone3_interface_t is record
         m2s : wishbone3_m2s_t;
         s2m : wishbone3_s2m_t;
-    end record axi_stream_interface_t;
+    end record wishbone3_interface_t;
 
 end wishbone3_interface_pkg;
 
