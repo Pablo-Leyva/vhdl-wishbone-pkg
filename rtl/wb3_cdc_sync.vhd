@@ -89,8 +89,8 @@ begin
               bclk=> wb_a_clk, brst=> wb_a_rst, bpulse_o => wb_a_pulse_ack_resp_s);
 
     inst_sync_pulse_err : entity work.sync_pulse
-    port map ( aclk=> wb_b_clk, arst=> wb_b_rst, apulse_i => wb_b_pulse_rty_resp_s,
-               bclk=> wb_a_clk, brst=> wb_a_rst, bpulse_o => wb_a_pulse_rty_resp_s);
+    port map ( aclk=> wb_b_clk, arst=> wb_b_rst, apulse_i => wb_b_pulse_err_resp_s,
+               bclk=> wb_a_clk, brst=> wb_a_rst, bpulse_o => wb_a_pulse_err_resp_s);
 
     inst_sync_pulse_rty : entity work.sync_pulse
     port map( aclk=> wb_b_clk, arst=> wb_b_rst, apulse_i => wb_b_pulse_rty_resp_s,

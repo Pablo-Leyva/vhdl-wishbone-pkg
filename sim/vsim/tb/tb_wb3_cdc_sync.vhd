@@ -14,10 +14,11 @@ use work.memory_pkg.all;
 use work.wishbone_pkg.all;
 use work.bus_master_pkg.all;
 
+use work.wishbone3_interface_pkg.all;
+use work.wishbone3_utils_pkg.all;
+
 library osvvm;
 use osvvm.RandomPkg.all;
-
-use work.qkd_utils.all;
 
 entity tb_wb3_cdc_sync is
 generic(
@@ -52,12 +53,14 @@ architecture a of tb_wb3_cdc_sync is
     signal wb_a_clk, wb_a_rst : std_ulogic := '0';
     signal wb_b_clk, wb_b_rst : std_ulogic := '0';
 
+    signal stb_s, stb_latch_s : std_ulogic := '0';
+
     constant wb_cnf_c : wishbone3_interface_cnf_t := wishbone3_interface_cnf_t'(addr_width => WB_ADDR_WIDTH_G,
                                                                                 data_width => WB_DATA_WIDTH_G);
     signal wb_a, wb_b : wishbone3_interface_t(m2s(addr(get_addr_width(wb_cnf_c)-1 downto 0),
                                                   data(get_data_width(wb_cnf_c)-1 downto 0),
                                                   sel( get_sel_width( wb_cnf_c)-1 downto 0)),
-                                              s2m(addr(get_addr_width(wb_cnf_c)-1 downto 0)));
+                                              s2m(data(get_addr_width(wb_cnf_c)-1 downto 0)));
 
 begin
 
@@ -126,11 +129,24 @@ begin
         dat_i => wb_a.s2m.data,
         sel   => wb_a.m2s.sel,
         cyc   => wb_a.m2s.cyc,
-        stb   => wb_a.m2s.stb,
+        stb   => stb_s,
         we    => wb_a.m2s.we,
         stall => '0',--open,
         ack   => wb_a.s2m.ack or wb_a.s2m.err
     );
+
+    p_stb_latch : process (wb_a_clk)
+    begin
+      if rising_edge(wb_a_clk) then
+          if (wb_a.s2m.ack or wb_a.s2m.err) = '1' then
+            stb_latch_s <= '0';
+          else
+            stb_latch_s <= stb_s or wb_a.m2s.stb;
+          end if;
+      end if;
+    end process;
+
+    wb_a.m2s.stb <= stb_s or stb_latch_s;
 
     inst_uut : entity work.wb3_cdc_sync
     generic map( wb_cnf_g => wb_cnf_c)
@@ -145,6 +161,9 @@ begin
         wb_b_m2s => wb_b.m2s,
         wb_b_s2m => wb_b.s2m
     );
+
+    wb_b.s2m.err <= '0';
+    wb_b.s2m.rty <= '0';
 
     p_ack : process (wb_b_clk)
     begin

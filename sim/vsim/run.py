@@ -17,6 +17,7 @@ lib = ui.library("vunit_lib")
 
 #Include libraries
 lib.add_source_files(join(root, "../../../vhdl-utils/rtl/", "*.vhd"))
+lib.add_source_files(join(root, "../../pkg", "*.vhd"))
 
 #Include Sources
 lib.add_source_files(join(root, "../../rtl", "*.vhd"))
