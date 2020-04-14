@@ -19,10 +19,10 @@ port (
 
     wb_b_clk : in  std_ulogic;
     wb_b_rst : in  std_ulogic;
-    wb_b_m2s : in  wishbone3_m2s_t(addr(get_addr_width(wb_cnf_g)-1 downto 0),
+    wb_b_m2s : out wishbone3_m2s_t(addr(get_addr_width(wb_cnf_g)-1 downto 0),
                                    data(get_data_width(wb_cnf_g)-1 downto 0),
                                    sel( get_sel_width( wb_cnf_g)-1 downto 0));
-    wb_b_s2m : out wishbone3_s2m_t(data(get_data_width(wb_cnf_g)-1 downto 0))
+    wb_b_s2m : in  wishbone3_s2m_t(data(get_data_width(wb_cnf_g)-1 downto 0))
 );
 end wb3_cdc_sync;
 
@@ -57,29 +57,22 @@ begin
     wb_a_req_s <= wb_a_m2s.cyc and wb_a_m2s.stb;
 
     inst_req_to_pulse_req : entity work.edge_to_pulse
-    generic map ( edge_g => "RISING" );
-    port (
-        clk     => wb_a_clk,
-        rst     => wb_a_rst or req_a_rst_s,
-        input_i => wb_a_req_s,
-        pulse_o => wb_a_pulse_req_s
-    );
+    generic map ( edge_g => "RISING" )
+    port map( clk     => wb_a_clk,
+              rst     => wb_a_rst or req_a_rst_s,
+              input_i => wb_a_req_s,
+              pulse_o => wb_a_pulse_req_s);
 
     inst_sync_pulse_req : entity work.sync_pulse
-    generic map ( edge_g => "RISING" );
-    port (
-        aclk=> wb_a_clk, arst=> wb_a_rst, apulse_i => wb_a_pulse_req_s,
-        bclk=> wb_b_clk, brst=> wb_b_rst, bpulse_o => wb_b_pulse_req_s
-    );
+    port map( aclk=> wb_a_clk, arst=> wb_a_rst, apulse_i => wb_a_pulse_req_s,
+              bclk=> wb_b_clk, brst=> wb_b_rst, bpulse_o => wb_b_pulse_req_s);
 
-    inst_pulse_req_to_req : entity work.pulse_to_req
-    generic map ( edge_g => "RISING" );
-    port (
-        clk     => wb_b_clk,
-        rst     => wb_b_rst or req_b_rst_s,
-        pulse_i => wb_b_pulse_req_s,
-        level_o => wb_b_req_s
-    );
+    inst_pulse_req_to_req : entity work.pulse_to_edge
+    generic map ( edge_g => "RISING" )
+    port map( clk     => wb_b_clk,
+              rst     => wb_b_rst or req_b_rst_s,
+              pulse_i => wb_b_pulse_req_s,
+              level_o => wb_b_req_s);
 
     wb_b_m2s.cyc <= wb_b_req_s;
     wb_b_m2s.stb <= wb_b_req_s;
@@ -92,19 +85,16 @@ begin
     req_b_rst_s <= wb_b_pulse_ack_resp_s or wb_b_pulse_err_resp_s or wb_b_pulse_rty_resp_s;
 
     inst_sync_pulse_ack : entity work.sync_pulse
-    generic map ( edge_g => "RISING" );
-    port (aclk=> wb_b_clk, arst=> wb_b_rst, apulse_i => wb_b_pulse_ack_resp_s,
-          bclk=> wb_a_clk, brst=> wb_a_rst, bpulse_o => wb_a_pulse_ack_resp_s);
+    port map( aclk=> wb_b_clk, arst=> wb_b_rst, apulse_i => wb_b_pulse_ack_resp_s,
+              bclk=> wb_a_clk, brst=> wb_a_rst, bpulse_o => wb_a_pulse_ack_resp_s);
 
     inst_sync_pulse_err : entity work.sync_pulse
-    generic map ( edge_g => "RISING" );
-    port (aclk=> wb_b_clk, arst=> wb_b_rst, apulse_i => wb_b_pulse_rty_resp_s,
-          bclk=> wb_a_clk, brst=> wb_a_rst, bpulse_o => wb_a_pulse_rty_resp_s);
+    port map ( aclk=> wb_b_clk, arst=> wb_b_rst, apulse_i => wb_b_pulse_rty_resp_s,
+               bclk=> wb_a_clk, brst=> wb_a_rst, bpulse_o => wb_a_pulse_rty_resp_s);
 
     inst_sync_pulse_rty : entity work.sync_pulse
-    generic map ( edge_g => "RISING" );
-    port (aclk=> wb_b_clk, arst=> wb_b_rst, apulse_i => wb_b_pulse_rty_resp_s,
-          bclk=> wb_a_clk, brst=> wb_a_rst, bpulse_o => wb_a_pulse_rty_resp_s);
+    port map( aclk=> wb_b_clk, arst=> wb_b_rst, apulse_i => wb_b_pulse_rty_resp_s,
+              bclk=> wb_a_clk, brst=> wb_a_rst, bpulse_o => wb_a_pulse_rty_resp_s);
 
     req_a_rst_s <= wb_a_pulse_ack_resp_s or wb_a_pulse_err_resp_s or wb_a_pulse_rty_resp_s;
 
