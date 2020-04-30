@@ -48,8 +48,12 @@ begin
 
     p_latch_wb_data_resp : process (wb_b_clk)
     begin
-        if wb_b_pulse_ack_resp_s='1' then
-            wb_a_s2m.data <= wb_b_s2m.data;
+        if rising_edge(wb_b_clk) then
+        
+            if wb_b_pulse_ack_resp_s='1' then
+                wb_a_s2m.data <= wb_b_s2m.data;
+            end if;
+            
         end if;
     end process p_latch_wb_data_resp;
 
